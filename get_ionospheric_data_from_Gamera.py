@@ -9,7 +9,7 @@ from tqdm import tqdm
 import dipole
 import datetime
 
-import pickle
+import h5py
 
 #%% Fun
 
@@ -118,6 +118,17 @@ for i in tqdm(range(0, nt), total=nt): # skipping the first because TIEGCM does 
 
 #%% Save it
 
-with open(path_out + 'ionospheric_data_from_Gamera.pkl', 'wb') as file:
-    pickle.dump(dat, file)
+# Create HDF5 file
+with h5py.File(path_out + 'ionospheric_data_from_Gamera.h5', 'w') as hf:
+    for i, entry in enumerate(dat):
+        grp = hf.create_group(f"step_{i:04d}")
+
+        # Save metadata (time) as an attribute
+        grp.attrs['time'] = entry['time'].isoformat()
+
+        # Save all array fields
+        for key, val in entry.items():
+            if key != 'time':
+                grp.create_dataset(key, data=val)
+
 
