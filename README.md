@@ -1,5 +1,4 @@
-# ANGMAR
-Augmented Network of Ground-based Magnetometers for Adaptive Refinement
+# ANGMAR: Augmented Network of Ground-based Magnetometers for Adaptive Refinement
 
 ANGMAR is a scientific initiative aimed at enhancing existing geomagnetic observation networks through the deployment of low-cost, ground-based magnetometers. By strategically filling spatial gaps in current arrays, ANGMAR provides improved regional coverage and higher spatial resolution for studies of ionospheric electrodynamics, space weather, and geomagnetic phenomena.
 
