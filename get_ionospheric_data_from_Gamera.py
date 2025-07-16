@@ -118,6 +118,6 @@ for i in tqdm(range(0, nt), total=nt): # skipping the first because TIEGCM does 
 
 #%% Save it
 
-with open(path_out + 'ionospheric_data.pkl', 'wb') as file:
+with open(path_out + 'ionospheric_data_from_Gamera.pkl', 'wb') as file:
     pickle.dump(dat, file)
 
