@@ -9,6 +9,9 @@ from tqdm import tqdm
 import dipole
 import datetime
 
+from multiprocessing import Pool, cpu_count
+from functools import partial
+
 import h5py
 
 #%% Fun
@@ -77,7 +80,7 @@ for i in tqdm(range(0, nt), total=nt): # skipping the first because TIEGCM does 
     # Convert to geographic
     lat, lon, JHe, JHn = dpl.mag2geo(mlat, mlon, JHe, JHn)
     _  , _  , JHe, JHn = dpl.mag2geo(mlat, mlon, JHe, JHn)
-    
+    '''
     from kaipy.kdefs import RionE, REarth
     r = REarth*1.e-6 / RionE # dB say to use units of Ri    
     x = r * np.sin(np.deg2rad(90-mlat)) * np.cos(np.deg2rad(lon))
@@ -101,11 +104,54 @@ for i in tqdm(range(0, nt), total=nt): # skipping the first because TIEGCM does 
     dBr = np.concatenate(dBr_list)
     dBtheta = np.concatenate(dBtheta_list)
     dBphi = np.concatenate(dBphi_list)
+    '''
+    
+    # 1. Precompute xyz as before
+    from kaipy.kdefs import RionE, REarth
+    r = REarth * 1.e-6 / RionE
+    x = r * np.sin(np.deg2rad(90 - mlat)) * np.cos(np.deg2rad(lon))
+    y = r * np.sin(np.deg2rad(90 - mlat)) * np.sin(np.deg2rad(lon))
+    z = r * np.cos(np.deg2rad(90 - mlat))
+    xyz = np.vstack((x.flatten(), y.flatten(), z.flatten())).T
+    N = xyz.shape[0]
+
+    # 2. Split xyz into chunks
+    chunk_size = 10
+    xyz_chunks = [xyz[i:i + chunk_size] for i in range(0, N, chunk_size)]
+
+    # 3. Define a wrapper for ion.dB
+    def compute_dB(chunk, ion):
+        return ion.dB(chunk)
+
+    # 4. Use multiprocessing
+    # This part is tricky: ion must be accessible inside the worker
+    # Workaround: use a global variable + initializer
+
+    # Global placeholder
+    _global_ion = None
+
+    def init_worker(ion_instance):
+        global _global_ion
+        _global_ion = ion_instance
+
+    def compute_dB_worker(chunk):
+        return _global_ion.dB(chunk)
+
+    # 5. Run with multiprocessing
+    if __name__ == "__main__":
+        nproc = min(cpu_count(), 48)  # don't use all 192 unless needed
+
+        with Pool(processes=nproc, initializer=init_worker, initargs=(ion,)) as pool:
+            results = list(tqdm(pool.imap(compute_dB_worker, xyz_chunks), total=len(xyz_chunks), leave=False))
+
+        # 6. Unpack results
+        dBr_list, dBtheta_list, dBphi_list = zip(*results)
+        dBr = np.concatenate(dBr_list)
+        dBtheta = np.concatenate(dBtheta_list)
+        dBphi = np.concatenate(dBphi_list)
     
     _  , _  , dBe, dBn = dpl.mag2geo(mlat, mlon, dBphi.reshape(x.shape), -dBtheta.reshape(x.shape))
     dBu = dBr.reshape(x.shape)
-    
-    #dBe, dBn, dBu = 1, 1, 1
     
     # Save it
     dat.append({'time': dt, 'lat': lat, 'lon': lon,
