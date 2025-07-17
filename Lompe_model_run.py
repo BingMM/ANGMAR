@@ -143,26 +143,20 @@ print('Creating data object(s)')
 rs = np.full(grid.lat.size, 6380e3 + 1000e3)
 FAC_data = lompe.Data(dat_int[i]['FAC'].flatten() * grid.R / rs.flatten()[0], np.vstack((grid.lon.flatten(), grid.lat.flatten())), datatype = 'fac')
 
-#E_data = lompe.Data(np.vstack((dat_c['E_e'].to_numpy(), dat_c['E_n'].to_numpy())), np.vstack((dat_c['lon'].to_numpy(), dat_c['lat'].to_numpy())), datatype = 'Efield')
+lon = np.hstack((grid.lon[0, :], grid.lon[-1, :], grid.lon[:, 0], grid.lon[-1, :]))
+lat = np.hstack((grid.lat[0, :], grid.lat[-1, :], grid.lat[:, 0], grid.lat[-1, :]))
+Ee, En = np.zeros(len(lon)), np.zeros(len(lon))
+E_data = lompe.Data(np.vstack((Ee, En)), np.vstack((lon, lat)), datatype = 'Efield')
 
 print('Passing data object(s)')
 emodel.clear_model()
-#emodel.add_data(E_data)
+emodel.add_data(E_data)
 emodel.add_data(FAC_data)
 
 print('Running inversion')
 gtg, gtd = emodel.run_inversion(l1 = 0, l2 = 0)
 
 #%% Plot it
-'''
-print('Plotting results')
-plt.ioff()
-lompe.lompeplot(emodel)
-plt.savefig(os.path.join(path_out, 'lompe_test.png'), bbox_inches='tight')
-plt.close('all')
-plt.ion()
-'''
-#%%
 
 print('Plotting results')
 time = dat[i]['time']
@@ -184,7 +178,6 @@ cmap = 'bwr'
 
 plt.ioff()
 fig = plt.figure(figsize=(10,10))
-#plt.imshow(var, vmin=-vmax, vmax=vmax, cmap=cmap)
 ax = plt.gca()
 pax = Polarplot(ax)
 pax.coastlines(time, mag=apx)
