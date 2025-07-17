@@ -43,7 +43,7 @@ print('Defining CS grid')
 position = (270, 79) # lon, lat for center of the grid
 orientation = 0.
 L = 45e6
-Lres = 60e3#30e3
+Lres = 100e3#30e3
 grid = lompe.cs.CSgrid(lompe.cs.CSprojection(position, orientation), L, L, Lres, Lres, R = 6380e3 + 120e3)
 
 print('{} GB in single precision'.format(np.round(grid.xi_mesh.size**2 * 4 / 1024**3, 2)))
@@ -134,32 +134,32 @@ emodel = lompe.Emodel(grid, Hall_Pedersen_conductance=(SH_funs[0], SP_funs[0]), 
 
 #%% Loop
 
-print('Starting loop')
 output = []
-for i in tqdm(range(len(dat_int)), total=len(dat_int), desc='Creating conductance functions'):
+loop = tqdm(range(len(dat_int)), total=len(dat_int), desc='Lompe loop')
+for i in loop:
     
-    print('Resetting emodel')
+    loop.set_description(f"[{i}] Resetting emodel".ljust(30))
     emodel.clear_model(Hall_Pedersen_conductance=(SH_funs[i], SP_funs[i]))
 
-    print('Creating data object(s)')
+    loop.set_description(f"[{i}] Creating data object(s)".ljust(30))
     rs = np.full(grid.lat.size, 6380e3 + 1000e3)
     FAC_data = lompe.Data(dat_int[i]['FAC'].flatten() * grid.R / rs.flatten()[0], 
                           np.vstack((grid.lon.flatten(), grid.lat.flatten())), 
-                          datatype = 'fac')
+                          datatype = 'fac', error=1e-5, iweight=1)
 
     lon = np.hstack((grid.lon[0, :], grid.lon[-1, :], grid.lon[:, 0], grid.lon[-1, :]))
     lat = np.hstack((grid.lat[0, :], grid.lat[-1, :], grid.lat[:, 0], grid.lat[-1, :]))
     Ee, En = np.zeros(len(lon)), np.zeros(len(lon))
-    E_data = lompe.Data(np.vstack((Ee, En)), np.vstack((lon, lat)), datatype = 'Efield')
+    E_data = lompe.Data(np.vstack((Ee, En)), np.vstack((lon, lat)), datatype = 'Efield', error=0.003, iweight=1)
 
-    print('Passing data object(s)')
+    loop.set_description(f"[{i}] Passing data object(s)".ljust(30))
     emodel.add_data(E_data)
     emodel.add_data(FAC_data)
 
-    print('Running inversion')
+    loop.set_description(f"[{i}] Running inversion".ljust(30))
     _, _ = emodel.run_inversion(l1 = 0, l2 = 0)
-    
-    print('Storing relevant data')
+
+    loop.set_description(f"[{i}] Storing relevant data".ljust(30))
     FAC = emodel.FAC().reshape(grid.shape)
     Je, Jn = emodel.j()
     Be, Bn, Bu = emodel.B_ground()
