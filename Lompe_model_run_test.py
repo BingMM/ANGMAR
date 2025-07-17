@@ -22,7 +22,7 @@ cwd = os.getcwd()
 #base = os.path.abspath(os.path.join(cwd, '..'))
 base = cwd
 path_in = os.path.join(base, 'data', 'ionospheric_data_from_Gamera.h5')
-path_out = os.path.join(base, 'data', 'ionospheric_data_from_Lompe.h5')
+path_out = os.path.join(base, 'figures')
 
 #%% Import data
 
@@ -117,6 +117,8 @@ for i in tqdm(range(len(dat)), total=len(dat), desc='Interpolating data to CS'):
                     'SH': SH_int, 'SP': SP_int, 'FAC': FAC_int}
                    )
 
+#%% Fake E data
+
 #%% Define conductance function
 
 SH_funs, SP_funs = [], []
@@ -132,57 +134,71 @@ print('\nInitiating Lompe model')
 
 emodel = lompe.Emodel(grid, Hall_Pedersen_conductance=(SH_funs[0], SP_funs[0]), dipole = True, epoch=time.year)
 
-#%% Loop
+#%% Start with one model
 
-print('Starting loop')
-output = []
-for i in tqdm(range(len(dat_int)), total=len(dat_int), desc='Creating conductance functions'):
-    
-    print('Resetting emodel')
-    emodel.clear_model(Hall_Pedersen_conductance=(SH_funs[i], SP_funs[i]))
+i = 0
 
-    print('Creating data object(s)')
-    rs = np.full(grid.lat.size, 6380e3 + 1000e3)
-    FAC_data = lompe.Data(dat_int[i]['FAC'].flatten() * grid.R / rs.flatten()[0], 
-                          np.vstack((grid.lon.flatten(), grid.lat.flatten())), 
-                          datatype = 'fac')
+print('Creating data object(s)')
 
-    lon = np.hstack((grid.lon[0, :], grid.lon[-1, :], grid.lon[:, 0], grid.lon[-1, :]))
-    lat = np.hstack((grid.lat[0, :], grid.lat[-1, :], grid.lat[:, 0], grid.lat[-1, :]))
-    Ee, En = np.zeros(len(lon)), np.zeros(len(lon))
-    E_data = lompe.Data(np.vstack((Ee, En)), np.vstack((lon, lat)), datatype = 'Efield')
+rs = np.full(grid.lat.size, 6380e3 + 1000e3)
+FAC_data = lompe.Data(dat_int[i]['FAC'].flatten() * grid.R / rs.flatten()[0], np.vstack((grid.lon.flatten(), grid.lat.flatten())), datatype = 'fac')
 
-    print('Passing data object(s)')
-    emodel.add_data(E_data)
-    emodel.add_data(FAC_data)
+lon = np.hstack((grid.lon[0, :], grid.lon[-1, :], grid.lon[:, 0], grid.lon[-1, :]))
+lat = np.hstack((grid.lat[0, :], grid.lat[-1, :], grid.lat[:, 0], grid.lat[-1, :]))
+Ee, En = np.zeros(len(lon)), np.zeros(len(lon))
+E_data = lompe.Data(np.vstack((Ee, En)), np.vstack((lon, lat)), datatype = 'Efield')
 
-    print('Running inversion')
-    _, _ = emodel.run_inversion(l1 = 0, l2 = 0)
-    
-    print('Storing relevant data')
-    FAC = emodel.FAC().reshape(grid.shape)
-    Je, Jn = emodel.j()
-    Be, Bn, Bu = emodel.B_ground()
-    S = emodel._B_df_matrix(return_poles=True)
-    output.append({'time': dat_int[i]['time'],
-                   'SH': dat[i]['SH'], 'SP': dat[i]['SP'],
-                   'FAC_int': dat[i]['FAC'],
-                   'FAC': FAC, 'S': S,
-                   'Je': Je, 'Jn': Jn,
-                   'Be': Be, 'Bn': Bn, 'Bu': Bu}
-                 )
+print('Passing data object(s)')
+emodel.clear_model()
+emodel.add_data(E_data)
+emodel.add_data(FAC_data)
 
-#%% Save to h5
+print('Running inversion')
+gtg, gtd = emodel.run_inversion(l1 = 0, l2 = 0)
 
-# Create HDF5 file
-with h5py.File(path_out, 'w') as hf:
-    for i, entry in enumerate(dat):
-        grp = hf.create_group(f"step_{i:04d}")
+#%% Plot it
 
-        # Save metadata (time) as an attribute
-        grp.attrs['time'] = entry['time'].isoformat()
+print('Plotting results')
+time = dat[i]['time']
+        
+dpl = Dipole(epoch=time.year)
+apx = Apex(time)
+        
+mlat, mlon = dpl.geo2mag(grid.lat, grid.lon)
+mlt = dpl.mlon2mlt(mlon, time)
 
-        # Save all array fields
-        for key, val in entry.items():
-            if key != 'time':
-                grp.create_dataset(key, data=val)
+var = emodel.FAC()
+print(var.shape)
+if len(var.shape) == 1:
+    var = var.reshape(grid.shape)
+print(var.shape)
+vmax = np.max(abs(var))
+clvls = np.linspace(-vmax, vmax, 40)
+cmap = 'bwr'
+
+plt.ioff()
+fig = plt.figure(figsize=(10,10))
+ax = plt.gca()
+pax = Polarplot(ax)
+pax.coastlines(time, mag=apx)
+pax.contourf(mlat, mlt, var, cmap=cmap, levels=clvls)
+plt.savefig(os.path.join(path_out, 'lompe_test.png'), bbox_inches='tight')
+plt.close('all')
+plt.ion()
+
+
+
+#%% Loop over model
+
+
+
+
+
+
+
+
+
+
+
+
+
