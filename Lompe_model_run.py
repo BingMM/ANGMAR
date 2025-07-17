@@ -8,6 +8,9 @@ import h5py
 from datetime import datetime
 from tqdm import tqdm
 
+from dipole import Dipole
+from apexpy import Apex
+
 import lompe
 from scipy.interpolate import griddata
 
@@ -40,7 +43,7 @@ print('Defining CS grid')
 position = (270, 79) # lon, lat for center of the grid
 orientation = 0.
 L = 45e6
-Lres = 100e3#30e3
+Lres = 200e3#30e3
 grid = lompe.cs.CSgrid(lompe.cs.CSprojection(position, orientation), L, L, Lres, Lres, R = 6380e3 + 120e3)
 
 print('{} GB in single precision'.format(int(grid.xi_mesh.size**2 * 4 / 1024**3)))
@@ -120,8 +123,8 @@ for i in tqdm(range(len(dat)), total=len(dat), desc='Interpolating data to CS'):
 
 SH_funs, SP_funs = [], []
 for i in tqdm(range(len(dat_int)), total=len(dat_int), desc='Creating conductance functions'):
-    SH_fun = lambda lon, lat, i=i: dat_int[i]['SH']
-    SP_fun = lambda lon, lat, i=i: dat_int[i]['SP']
+    SH_fun = lambda lon, lat, i=i: dat_int[i]['SH'].flatten()
+    SP_fun = lambda lon, lat, i=i: dat_int[i]['SP'].flatten()
     SH_funs.append(SH_fun)
     SP_funs.append(SP_fun)
 
@@ -151,10 +154,46 @@ print('Running inversion')
 gtg, gtd = emodel.run_inversion(l1 = 0, l2 = 0)
 
 #%% Plot it
-
+'''
+print('Plotting results')
+plt.ioff()
 lompe.lompeplot(emodel)
 plt.savefig(os.path.join(path_out, 'lompe_test.png'), bbox_inches='tight')
 plt.close('all')
+plt.ion()
+'''
+#%%
+
+print('Plotting results')
+time = dat[i]['time']
+        
+dpl = Dipole(epoch=time.year)
+apx = Apex(time)
+        
+mlat, mlon = dpl.geo2mag(dat[i]['lat'], dat[i]['lon'])
+mlt = dpl.mlon2mlt(mlon, dat[i]['time'])
+
+var = emodel.FAC()
+print(var.shape)
+if len(var.shape) == 1:
+    var = var.reshape(grid.shape)
+print(var.shape)
+vmax = np.max(abs(var))
+clvls = np.linspace(-vmax, vmax, 40)
+cmap = 'bwr'
+
+plt.ioff()
+fig = plt.figure(figsize=(10,10))
+plt.imshow(var)
+#ax = plt.gca()
+#pax = Polarplot(ax)
+#pax.coastlines(time, mag=apx)
+#pax.contourf(mlat, mlt, var, cmap=cmap, levels=clvls)
+plt.savefig(os.path.join(path_out, 'lompe_test.png'), bbox_inches='tight')
+plt.close('all')
+plt.ion()
+
+
 
 #%% Loop over model
 
