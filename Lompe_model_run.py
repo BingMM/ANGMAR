@@ -170,8 +170,8 @@ time = dat[i]['time']
 dpl = Dipole(epoch=time.year)
 apx = Apex(time)
         
-mlat, mlon = dpl.geo2mag(dat[i]['lat'], dat[i]['lon'])
-mlt = dpl.mlon2mlt(mlon, dat[i]['time'])
+mlat, mlon = dpl.geo2mag(grid.lat, grid.lon)
+mlt = dpl.mlon2mlt(mlon, time)
 
 var = emodel.FAC()
 print(var.shape)
@@ -184,11 +184,11 @@ cmap = 'bwr'
 
 plt.ioff()
 fig = plt.figure(figsize=(10,10))
-plt.imshow(var)
-#ax = plt.gca()
-#pax = Polarplot(ax)
-#pax.coastlines(time, mag=apx)
-#pax.contourf(mlat, mlt, var, cmap=cmap, levels=clvls)
+#plt.imshow(var, vmin=-vmax, vmax=vmax, cmap=cmap)
+ax = plt.gca()
+pax = Polarplot(ax)
+pax.coastlines(time, mag=apx)
+pax.contourf(mlat, mlt, var, cmap=cmap, levels=clvls)
 plt.savefig(os.path.join(path_out, 'lompe_test.png'), bbox_inches='tight')
 plt.close('all')
 plt.ion()
