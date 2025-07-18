@@ -165,11 +165,17 @@ for i in loop:
     Be, Bn, Bu = emodel.B_ground()
     S = emodel._B_df_matrix(return_poles=True)
     output.append({'time': dat_int[i]['time'],
-                   'SH': dat[i]['SH'], 'SP': dat[i]['SP'],
+                   'SH': dat_int[i]['SH'], 
+                   'SP': dat_int[i]['SP'],
                    'FAC_int': dat[i]['FAC'],
-                   'FAC': FAC, 'S': S,
-                   'Je': Je, 'Jn': Jn,
-                   'Be': Be, 'Bn': Bn, 'Bu': Bu}
+                   'FAC': FAC, 
+                   'S': S.reshape(grid.shape),
+                   'Je': Je.reshape(grid.shape), 
+                   'Jn': Jn.reshape(grid.shape),
+                   'Be': Be.reshape(grid.xi_mesh.shape), 
+                   'Bn': Bn.reshape(grid.xi_mesh.shape), 
+                   'Bu': Bu.reshape(grid.xi_mesh.shape)
+                   }
                  )
 
 #%% Save to h5
