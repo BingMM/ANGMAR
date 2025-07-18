@@ -43,7 +43,7 @@ print('Defining CS grid')
 position = (270, 79) # lon, lat for center of the grid
 orientation = 0.
 L = 45e6
-Lres = 60e3#30e3
+Lres = 200e3#30e3
 grid = lompe.cs.CSgrid(lompe.cs.CSprojection(position, orientation), L, L, Lres, Lres, R = 6380e3 + 120e3)
 
 print('{} GB in single precision'.format(np.round(grid.xi_mesh.size**2 * 4 / 1024**3, 2)))
@@ -173,10 +173,11 @@ for i in loop:
                  )
 
 #%% Save to h5
+
 print('Saving to file')
 # Create HDF5 file
 with h5py.File(path_out, 'w') as hf:
-    for i, entry in enumerate(dat):
+    for i, entry in enumerate(output):
         grp = hf.create_group(f"step_{i:04d}")
 
         # Save metadata (time) as an attribute
