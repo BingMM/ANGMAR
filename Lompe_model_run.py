@@ -167,7 +167,7 @@ for i in loop:
     output.append({'time': dat_int[i]['time'],
                    'SH': dat_int[i]['SH'], 
                    'SP': dat_int[i]['SP'],
-                   'FAC_int': dat[i]['FAC'],
+                   'FAC_int': dat_int[i]['FAC'],
                    'FAC': FAC, 
                    'S': S.reshape(grid.shape),
                    'Je': Je.reshape(grid.shape), 
