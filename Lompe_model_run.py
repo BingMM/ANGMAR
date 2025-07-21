@@ -44,7 +44,7 @@ position = (270, 79) # lon, lat for center of the grid
 orientation = 0.
 L = 45e6
 Lres = 60e3#30e3
-grid = lompe.cs.CSgrid(lompe.cs.CSprojection(position, orientation), L, L, Lres, Lres, R = 6380e3 + 120e3)
+grid = lompe.cs.CSgrid(lompe.cs.CSprojection(position, orientation), L, L, Lres, Lres, R = 6371.2e3 + 110e3)
 
 print('{} GB in single precision'.format(np.round(grid.xi_mesh.size**2 * 4 / 1024**3, 2)))
 print('{} GB in double precision'.format(np.round(grid.xi_mesh.size**2 * 8 / 1024**3, 2)))
@@ -142,8 +142,8 @@ for i in loop:
     emodel.clear_model(Hall_Pedersen_conductance=(SH_funs[i], SP_funs[i]))
 
     loop.set_description(f"[{i}] Creating data object(s)".ljust(30))
-    rs = np.full(grid.lat.size, 6380e3 + 1000e3)
-    FAC_data = lompe.Data(dat_int[i]['FAC'].flatten() * grid.R / rs.flatten()[0], 
+    rs = np.full(grid.lat.size, 6380e3 + 120e3)
+    FAC_data = lompe.Data(dat_int[i]['FAC'].flatten() * rs.flatten()[0] / grid.R, 
                           np.vstack((grid.lon.flatten(), grid.lat.flatten())), 
                           datatype = 'fac', error=1e-5, iweight=1)
 

@@ -37,7 +37,7 @@ position = (270, 79) # lon, lat for center of the grid
 orientation = 0.
 L = 45e6
 Lres = 200e3#60e3
-grid = lompe.cs.CSgrid(lompe.cs.CSprojection(position, orientation), L, L, Lres, Lres, R = 6380e3 + 120e3)
+grid = lompe.cs.CSgrid(lompe.cs.CSprojection(position, orientation), L, L, Lres, Lres, R = 6371.2e3 + 110e3)
 
 #%% Convert to magnetic
 

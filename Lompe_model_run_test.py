@@ -44,7 +44,7 @@ position = (270, 79) # lon, lat for center of the grid
 orientation = 0.
 L = 45e6
 Lres = 60e3#30e3
-grid = lompe.cs.CSgrid(lompe.cs.CSprojection(position, orientation), L, L, Lres, Lres, R = 6380e3 + 120e3)
+grid = lompe.cs.CSgrid(lompe.cs.CSprojection(position, orientation), L, L, Lres, Lres, R = 6371.2e3 + 110e3)
 
 print('{} GB in single precision'.format(np.round(grid.xi_mesh.size**2 * 4 / 1024**3, 2)))
 print('{} GB in double precision'.format(np.round(grid.xi_mesh.size**2 * 8 / 1024**3, 2)))
@@ -117,8 +117,6 @@ for i in tqdm(range(len(dat)), total=len(dat), desc='Interpolating data to CS'):
                     'SH': SH_int, 'SP': SP_int, 'FAC': FAC_int}
                    )
 
-#%% Fake E data
-
 #%% Define conductance function
 
 SH_funs, SP_funs = [], []
@@ -140,8 +138,8 @@ i = 0
 
 print('Creating data object(s)')
 
-rs = np.full(grid.lat.size, 6380e3 + 1000e3)
-FAC_data = lompe.Data(dat_int[i]['FAC'].flatten() * grid.R / rs.flatten()[0], np.vstack((grid.lon.flatten(), grid.lat.flatten())), datatype = 'fac')
+rs = np.full(grid.lat.size, 6380e3 + 120e3)
+FAC_data = lompe.Data(dat_int[i]['FAC'].flatten() * rs.flatten()[0] / grid.R, np.vstack((grid.lon.flatten(), grid.lat.flatten())), datatype = 'fac')
 
 lon = np.hstack((grid.lon[0, :], grid.lon[-1, :], grid.lon[:, 0], grid.lon[-1, :]))
 lat = np.hstack((grid.lat[0, :], grid.lat[-1, :], grid.lat[:, 0], grid.lat[-1, :]))
@@ -185,20 +183,4 @@ pax.contourf(mlat, mlt, var, cmap=cmap, levels=clvls)
 plt.savefig(os.path.join(path_out, 'lompe_test.png'), bbox_inches='tight')
 plt.close('all')
 plt.ion()
-
-
-
-#%% Loop over model
-
-
-
-
-
-
-
-
-
-
-
-
 
