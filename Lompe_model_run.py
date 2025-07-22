@@ -143,7 +143,7 @@ for i in loop:
 
     loop.set_description(f"[{i}] Creating data object(s)".ljust(30))
     rs = np.full(grid.lat.size, 6380e3 + 120e3)
-    FAC_data = lompe.Data(dat_int[i]['FAC'].flatten() * rs.flatten()[0] / grid.R, 
+    FAC_data = lompe.Data(dat_int[i]['FAC'].flatten()*1e-6 * rs.flatten()[0] / grid.R, 
                           np.vstack((grid.lon.flatten(), grid.lat.flatten())), 
                           datatype = 'fac', error=1e-5, iweight=1)
 

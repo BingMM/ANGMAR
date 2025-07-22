@@ -139,7 +139,7 @@ i = 0
 print('Creating data object(s)')
 
 rs = np.full(grid.lat.size, 6380e3 + 120e3)
-FAC_data = lompe.Data(dat_int[i]['FAC'].flatten() * rs.flatten()[0] / grid.R, np.vstack((grid.lon.flatten(), grid.lat.flatten())), datatype = 'fac')
+FAC_data = lompe.Data(dat_int[i]['FAC'].flatten()*1e-6 * rs.flatten()[0] / grid.R, np.vstack((grid.lon.flatten(), grid.lat.flatten())), datatype = 'fac')
 
 lon = np.hstack((grid.lon[0, :], grid.lon[-1, :], grid.lon[:, 0], grid.lon[-1, :]))
 lat = np.hstack((grid.lat[0, :], grid.lat[-1, :], grid.lat[:, 0], grid.lat[-1, :]))
