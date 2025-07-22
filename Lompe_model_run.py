@@ -43,7 +43,7 @@ print('Defining CS grid')
 position = (270, 79) # lon, lat for center of the grid
 orientation = 0.
 L = 45e6
-Lres = 60e3#30e3
+Lres = 100e3#30e3
 grid = lompe.cs.CSgrid(lompe.cs.CSprojection(position, orientation), L, L, Lres, Lres, R = 6371.2e3 + 110e3)
 
 print('{} GB in single precision'.format(np.round(grid.xi_mesh.size**2 * 4 / 1024**3, 2)))
@@ -167,7 +167,7 @@ for i in loop:
     output.append({'time': dat_int[i]['time'],
                    'SH': dat_int[i]['SH'], 
                    'SP': dat_int[i]['SP'],
-                   'FAC_int': dat_int[i]['FAC'],
+                   'FAC_int': dat_int[i]['FAC']*1e-6,
                    'FAC': FAC, 
                    'S': S.reshape(grid.shape),
                    'Je': Je.reshape(grid.shape), 
