@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "angmar"
+version = "0.1"
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["angmar"]
