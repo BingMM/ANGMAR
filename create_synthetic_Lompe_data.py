@@ -48,7 +48,7 @@ print('Defining Lompe CS grid')
 position = (270, 79) # lon, lat for center of the grid
 orientation = 0.
 L = 45e6
-Lres = 60e3#30e3
+Lres = 100e3#60e3
 grid = lompe.cs.CSgrid(lompe.cs.CSprojection(position, orientation), L, L, Lres, Lres, R = 6371.2e3 + 110e3)
 s_limit = np.min([grid.Wres, grid.Lres])/2
 

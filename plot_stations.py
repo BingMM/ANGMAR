@@ -29,11 +29,12 @@ lt = lon / 15
 
 print('Defining CS grid')
 
-position = (25, 68) # lon, lat for center of the grid
+position = (22, 67.5) # lon, lat for center of the grid
 orientation = 8
-L = 1.1e6
+L = 0.8e6
+W = 1e6
 Lres = 10e3#60e3
-grid_s = lompe.cs.CSgrid(lompe.cs.CSprojection(position, orientation), L, L, Lres, Lres, R = 6371.2e3 + 110e3)
+grid_s = lompe.cs.CSgrid(lompe.cs.CSprojection(position, orientation), L, W, Lres, Lres, R = 6371.2e3 + 110e3)
 
 position = (210, 66) # lon, lat for center of the grid
 orientation = -12

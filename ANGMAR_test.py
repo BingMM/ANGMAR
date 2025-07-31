@@ -10,6 +10,7 @@ import h5py
 from datetime import datetime
 import matplotlib.pyplot as plt
 import polplot
+from apexpy import Apex
 
 #%% Paths
 
@@ -48,7 +49,7 @@ print('Defining Lompe CS grid')
 position = (270, 79) # lon, lat for center of the grid
 orientation = 0.
 L = 45e6
-Lres = 60e3#30e3
+Lres = 100e3#60e3
 grid = lompe.cs.CSgrid(lompe.cs.CSprojection(position, orientation), L, L, Lres, Lres, R = 6371.2e3 + 110e3)
 s_limit = np.min([grid.Wres, grid.Lres])/2
 
@@ -56,11 +57,12 @@ s_limit = np.min([grid.Wres, grid.Lres])/2
 
 print('Defining CS grid')
 
-position = (25, 68) # lon, lat for center of the grid
+position = (22, 67.5) # lon, lat for center of the grid
 orientation = 8
-L = 1.1e6
-Lres = 40e3#60e3
-grid_s = lompe.cs.CSgrid(lompe.cs.CSprojection(position, orientation), L, L, Lres, Lres, R = 6371.2e3 + 110e3)
+L = 0.9e6
+W = 1e6
+Lres = 10e3#60e3
+grid_s = lompe.cs.CSgrid(lompe.cs.CSprojection(position, orientation), L, W, Lres, Lres, R = 6371.2e3 + 110e3)
 
 position = (210, 66) # lon, lat for center of the grid
 orientation = -12
@@ -129,9 +131,9 @@ for grid_ in [grid_a, grid_c, grid_s]:
         S = dat_['S']
         
         Be_, Bn_, Bu_ = generate_data_points(lat_, lon_, r_, grid.lat.flatten(), grid.lon.flatten(), grid.R, S.flatten())
-        Be_ = add_noise(Be_, 5e9)
-        Bn_ = add_noise(Bn_, 5e9)
-        Bu_ = add_noise(Bu_, 5e9)
+        Be_ = add_noise(Be_, 5e-9)
+        Bn_ = add_noise(Bn_, 5e-9)
+        Bu_ = add_noise(Bu_, 5e-9)
         d = np.hstack((Be_, Bn_, Bu_))
             
         GTQd = G.T.dot(Qinv).dot(d)
@@ -147,9 +149,11 @@ for grid_ in [grid_a, grid_c, grid_s]:
     Bn_pred.append(Bn_pred_)
     Bu_pred.append(Bu_pred_)
 
-#%%
+#%% Plot it
 
 for i, grid_ in enumerate([grid_a, grid_c, grid_s]):
+    if i != 2:
+        continue
     folder = os.path.join(path_out, f'{i}')
     os.makedirs(folder, exist_ok=True)
     
@@ -172,6 +176,11 @@ for i, grid_ in enumerate([grid_a, grid_c, grid_s]):
         axs[0, 1].tricontourf(grid_.eta_mesh.flatten(), grid_.xi_mesh.flatten(), Bn, cmap=cmap, levels=clvls)
         axs[0, 2].tricontourf(grid_.eta_mesh.flatten(), grid_.xi_mesh.flatten(), Bu, cmap=cmap, levels=clvls)
         
+        if i == 2:
+            for ax in axs[0, :]:
+                xi_3D, eta_3D = grid_.projection.geo2cube(20.31425, 69.33997)
+                ax.plot(xi_3D, eta_3D, '*', markersize=10, color='tab:red')
+        
         for ax in axs[0, :]:
             ax.plot(xi_, eta_, '*', markersize=10, color='tab:green')
         
@@ -181,7 +190,19 @@ for i, grid_ in enumerate([grid_a, grid_c, grid_s]):
             xic, etac = grid_.projection.geo2cube(lonc, latc)
             for ax in axs.flatten():
                 ax.plot(xic, etac, linewidth=.5, color='k')
-                        
+        
+        apex = Apex(date=2013)
+        for la in np.arange(30, 90, 2):
+            la, lo, _ = apex.apex2geo(np.ones(1000)*la, np.linspace(0, 360, 1000), height=0)
+            xi, eta = grid_.projection.geo2cube(lo, la)
+            for ax in axs.flatten():
+                ax.plot(xi, eta, color='tab:red')
+        for lo in np.arange(0, 360, 5):
+            la, lo, _ = apex.apex2geo(np.linspace(0, 90, 1000), np.ones(1000)*lo, height=0)
+            xi, eta = grid_.projection.geo2cube(lo, la)
+            for ax in axs.flatten():
+                ax.plot(xi, eta, color='tab:red')
+        
         f = grid_.ingrid(grid.lon_mesh.flatten(), grid.lat_mesh.flatten())        
         xi, eta = grid_.projection.geo2cube(grid.lon_mesh.flatten(), grid.lat_mesh.flatten())        
         axs[1, 0].tricontourf(eta[f], xi[f], dat_['Be'].flatten()[f], cmap=cmap, levels=clvls)
